@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pomodoro_zoo_tracker/core/widgets/zoo_bottom_nav.dart';
 import '../providers/timer_provider.dart';
 import 'package:provider/provider.dart';
 import '../widgets/timer_circle.dart';
@@ -12,7 +13,7 @@ class TimerPage extends StatelessWidget {
     final provider = context.watch<TimerProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F0E8),
+      // backgroundColor: const Color(0xFFF5F0E8),
       appBar: AppBar(
         title: const Text('🍅 Pomodoro Zoo'),
         centerTitle: true,
@@ -46,6 +47,13 @@ class TimerPage extends StatelessWidget {
             ]
           ],
         ),
+      ),
+      bottomNavigationBar: ZooBottomNav(
+        currentIndex: 0, // ระบุ Index ของหน้านี้
+        onTap: (index) {
+          // จัดการการเปลี่ยนหน้าตรงนี้ เช่น Navigator.push หรือเปลี่ยน state
+          print("Tapped index: $index");
+        },
       ),
     );
   }

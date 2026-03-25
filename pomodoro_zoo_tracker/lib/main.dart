@@ -7,6 +7,7 @@ import 'features/timer/domain/usecases/pause_timer.dart';
 import 'features/timer/domain/usecases/reset_timer.dart';
 import 'features/timer/presentation/providers/timer_provider.dart';
 import 'features/timer/presentation/pages/timer_page.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,9 +34,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Pomodoro Zoo Tracker',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
-        ),
+        theme: AppTheme.lightTheme,
         home: const TimerPage(),
       ),
     );
