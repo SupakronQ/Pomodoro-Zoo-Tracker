@@ -9,7 +9,15 @@ import 'features/timer/presentation/providers/timer_provider.dart';
 import 'features/timer/presentation/pages/timer_page.dart';
 import 'core/theme/app_theme.dart';
 
-void main() {
+import 'core/database/database_helper.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Database
+  final dbHelper = DatabaseHelper();
+  await dbHelper.database;
+
   runApp(const MyApp());
 }
 
@@ -19,7 +27,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Wiring dependency injection แบบ manual
-    final dataSource = TimerLocalDataSource();
+    final dbHelper = DatabaseHelper();
+    final dataSource = TimerLocalDataSource(dbHelper);
     final repository = TimerRepositoryImpl(dataSource);
 
     return MultiProvider(

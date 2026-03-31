@@ -1,8 +1,14 @@
+import '../../../core/database/database_helper.dart';
 import '../models/timer_model.dart';
+import 'package:sqflite/sqflite.dart';
 
 // Data Source: ทำงานกับ SQLite โดยตรง
 class TimerLocalDataSource {
-  // TODO: inject Database instance จาก sqflite
+  final DatabaseHelper dbHelper;
+
+  TimerLocalDataSource(this.dbHelper);
+
+  Future<Database> get db async => await dbHelper.database;
 
   Future<TimerModel?> getLastTimer() async {
     // TODO: query SELECT * FROM timers ORDER BY id DESC LIMIT 1
