@@ -6,12 +6,20 @@ class ZooTimerDisplay extends StatelessWidget {
   final double progress;      // provider.progress (0.0 - 1.0)
   final String formattedTime; // provider.formattedTime (เช่น "25:00")
   final bool isCompleted;     // provider.isCompleted
+  final String sessionLabel;  // เช่น "FOCUS", "SHORT BREAK"
+  final int currentRound;
+  final int totalRounds;
+  final bool isBreak;
 
   const ZooTimerDisplay({
     super.key,
     required this.progress,
     required this.formattedTime,
     required this.isCompleted,
+    this.sessionLabel = 'FOCUS',
+    this.currentRound = 1,
+    this.totalRounds = 4,
+    this.isBreak = false,
   });
 
   @override
@@ -51,7 +59,7 @@ class ZooTimerDisplay extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isCompleted ? "COMPLETED" : "FOCUS",
+                    isCompleted ? "COMPLETED" : sessionLabel,
                     style: TextStyle(
                       fontFamily: 'Inter',
                       color: AppColors.secondary,
@@ -81,9 +89,11 @@ class ZooTimerDisplay extends StatelessWidget {
                     color: AppColors.surfaceContainerLow, // สี e7f8e9
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
-                    "Round 2/4",
-                    style: TextStyle(
+                  child: Text(
+                    isBreak
+                        ? sessionLabel
+                        : "Round $currentRound/$totalRounds",
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: AppColors.secondary,

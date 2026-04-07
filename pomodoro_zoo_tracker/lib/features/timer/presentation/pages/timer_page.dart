@@ -12,8 +12,11 @@ class TimerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<TimerProvider>();
 
+    // ถ้า timer ถูก pause อยู่ ให้ resume แทน start ใหม่
+    final hasTimer = provider.timer != null;
+    final isPaused = hasTimer && !provider.isRunning && !provider.isCompleted;
+
     return Scaffold(
-      // backgroundColor: const Color(0xFFF5F0E8),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -22,20 +25,26 @@ class TimerPage extends StatelessWidget {
               progress: provider.progress,
               formattedTime: provider.formattedTime,
               isCompleted: provider.isCompleted,
+              sessionLabel: provider.sessionLabel,
+              currentRound: provider.currentRound,
+              totalRounds: provider.totalRounds,
+              isBreak: provider.isBreak,
             ),
             const SizedBox(height: 40),
             TimerControls(
               isRunning: provider.isRunning,
               isCompleted: provider.isCompleted,
-              onStart: provider.start,
+              onStart: isPaused ? provider.resume : provider.start,
               onPause: provider.pause,
               onReset: provider.reset,
             ),
             if (provider.isCompleted) ...[
               const SizedBox(height: 32),
-              const Text(
-                '🎉 Pomodoro Complete! 🐾',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Text(
+                provider.isBreak
+                    ? '☕ Break done — ready to focus!'
+                    : '🎉 Pomodoro Complete! 🐾',
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ]
           ],

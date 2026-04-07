@@ -8,13 +8,7 @@ class PauseTimer {
   PauseTimer(this.repository);
 
   Future<TimerEntity> call(TimerEntity current) async {
-    final paused = TimerEntity(
-      id: current.id,
-      durationSeconds: current.durationSeconds,
-      elapsedSeconds: current.elapsedSeconds,
-      isRunning: false,
-      isCompleted: current.isCompleted,
-    );
+    final paused = current.copyWith(isRunning: false);
     await repository.saveTimer(paused);
     return paused;
   }
