@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pomodoro_zoo_tracker/core/theme/app_colors.dart';
 
 class TimerControls extends StatelessWidget {
   final bool isRunning;
@@ -8,48 +9,79 @@ class TimerControls extends StatelessWidget {
   final VoidCallback onReset;
 
   const TimerControls({
-    Key? key,
+    super.key,
     required this.isRunning,
     required this.isCompleted,
     required this.onStart,
     required this.onPause,
     required this.onReset,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        if (!isRunning && !isCompleted)
-          ElevatedButton.icon(
-            onPressed: onStart,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Start'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepOrange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        // ใช้ ConstrainedBox เพื่อกำหนด maxWidth แทน SizedBox
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 320), // เทียบเท่า max-w-xs
+          child: Container(
+            width: double.infinity, // ขยายเต็มที่ภายใต้ 320px
+            height: 64,
+            decoration: BoxDecoration(
+              // Organic Gradient ตามดีไซน์ HTML
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF356939), Color(0xFF7FB77E)],
+              ),
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF356939).withOpacity(0.3),
+                  blurRadius: 30,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: isRunning ? onPause : onStart,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                shape: const StadiumBorder(),
+              ),
+              child: Text(
+                isRunning ? 'PAUSE SESSION' : 'START FOCUS SESSION',
+                style: const TextStyle(
+                  fontFamily: 'Plus Jakarta Sans', //
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.white,
+                  letterSpacing: 0.8,
+                ),
+              ),
             ),
           ),
-        if (isRunning)
-          ElevatedButton.icon(
-            onPressed: onPause,
-            icon: const Icon(Icons.pause),
-            label: const Text('Pause'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        const SizedBox(width: 12),
-        OutlinedButton.icon(
+        ),
+        
+        const SizedBox(height: 24),
+
+        // ปุ่ม Reset แบบ Minimal
+        TextButton.icon(
           onPressed: onReset,
-          icon: const Icon(Icons.refresh),
-          label: const Text('Reset'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.brown,
+          icon: const Icon(Icons.replay, size: 20),
+          label: const Text(
+            'RESET TIMER',
+            style: TextStyle(
+              fontFamily: 'Inter', //
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              fontSize: 12,
+            ),
+          ),
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.primary, //
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
         ),

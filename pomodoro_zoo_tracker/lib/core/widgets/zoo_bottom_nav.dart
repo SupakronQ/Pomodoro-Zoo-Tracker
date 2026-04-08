@@ -38,10 +38,10 @@ class ZooBottomNav extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildNavItem(0, Icons.timer_outlined, Icons.timer, "FOCUS"),
-                  _buildNavItem(1, Icons.leaderboard_outlined, Icons.leaderboard, "STATS"),
-                  _buildNavItem(2, Icons.history_outlined, Icons.history, "HISTORY"),
+                  _buildNavItem(1, Icons.category_outlined, Icons.category, "CATEGORY"),
+                  _buildNavItem(2, Icons.leaderboard_outlined, Icons.leaderboard, "STATS"),
                   _buildNavItem(3, Icons.pets_outlined, Icons.pets, "ZOO"),
-                  _buildNavItem(4, Icons.settings_outlined, Icons.settings, "SETTINGS"),
+                  // _buildNavItem(4, Icons.settings_outlined, Icons.settings, "SETTINGS"),
                 ],
               ),
             ),

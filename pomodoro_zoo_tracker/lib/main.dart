@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pomodoro_zoo_tracker/presentation/main_page.dart';
 import 'package:provider/provider.dart';
 import 'features/timer/data/datasources/timer_local_datasource.dart';
 import 'features/timer/data/repositories/timer_repository_impl.dart';
@@ -44,7 +45,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Pomodoro Zoo Tracker',
         theme: AppTheme.lightTheme,
-        home: const TimerPage(),
+        home: const MainPage(),
       ),
     );
   }
