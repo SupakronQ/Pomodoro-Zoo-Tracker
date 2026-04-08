@@ -5,6 +5,8 @@ import '../../domain/usecases/start_timer.dart';
 import '../../domain/usecases/pause_timer.dart';
 import '../../domain/usecases/reset_timer.dart';
 
+enum PomodoroPhase { focus, shortBreak, longBreak }
+
 // Provider — UI State สำหรับ Timer
 // Logic หนักอยู่ใน UseCases ไม่ใช่ที่นี่
 class TimerProvider extends ChangeNotifier {
@@ -20,8 +22,30 @@ class TimerProvider extends ChangeNotifier {
 
   TimerEntity? _timer;
   Timer? _ticker;
+  PomodoroPhase _phase = PomodoroPhase.focus;
+  int _completedFocusRounds = 0;
+
+  static const int _focusSeconds = 25 * 60;
+  static const int _shortBreakSeconds = 5 * 60;
+  static const int _longBreakSeconds = 15 * 60;
 
   TimerEntity? get timer => _timer;
+  PomodoroPhase get phase => _phase;
+  int get completedFocusRounds => _completedFocusRounds;
+  int get currentRound => (_completedFocusRounds % 4) + 1;
+  bool get isBreak => _phase != PomodoroPhase.focus;
+  bool get isLongBreak => _phase == PomodoroPhase.longBreak;
+
+  String get phaseLabel {
+    switch (_phase) {
+      case PomodoroPhase.focus:
+        return 'FOCUS';
+      case PomodoroPhase.shortBreak:
+        return 'SHORT BREAK';
+      case PomodoroPhase.longBreak:
+        return 'LONG BREAK';
+    }
+  }
 
   int get remainingSeconds => _timer?.remainingSeconds ?? 25 * 60;
   bool get isRunning => _timer?.isRunning ?? false;
@@ -35,7 +59,25 @@ class TimerProvider extends ChangeNotifier {
   }
 
   Future<void> start() async {
-    _timer = await startTimerUseCase();
+    if (_timer != null && !_timer!.isRunning && !_timer!.isCompleted) {
+      _timer = TimerEntity(
+        id: _timer!.id,
+        durationSeconds: _timer!.durationSeconds,
+        elapsedSeconds: _timer!.elapsedSeconds,
+        isRunning: true,
+        isCompleted: false,
+      );
+    } else {
+      _timer = await startTimerUseCase();
+      _timer = TimerEntity(
+        id: _timer!.id,
+        durationSeconds: _durationForPhase(_phase),
+        elapsedSeconds: 0,
+        isRunning: true,
+        isCompleted: false,
+      );
+    }
+
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     notifyListeners();
@@ -54,6 +96,8 @@ class TimerProvider extends ChangeNotifier {
       await resetTimerUseCase(_timer!.id);
       _timer = null;
     }
+    _phase = PomodoroPhase.focus;
+    _completedFocusRounds = 0;
     notifyListeners();
   }
 
@@ -61,15 +105,55 @@ class TimerProvider extends ChangeNotifier {
     if (_timer == null || !_timer!.isRunning) return;
     final elapsed = _timer!.elapsedSeconds + 1;
     final completed = elapsed >= _timer!.durationSeconds;
+
+    if (!completed) {
+      _timer = TimerEntity(
+        id: _timer!.id,
+        durationSeconds: _timer!.durationSeconds,
+        elapsedSeconds: elapsed.clamp(0, _timer!.durationSeconds),
+        isRunning: true,
+        isCompleted: false,
+      );
+      notifyListeners();
+      return;
+    }
+
+    _advanceToNextPhase();
+    notifyListeners();
+  }
+
+  int _durationForPhase(PomodoroPhase phase) {
+    switch (phase) {
+      case PomodoroPhase.focus:
+        return _focusSeconds;
+      case PomodoroPhase.shortBreak:
+        return _shortBreakSeconds;
+      case PomodoroPhase.longBreak:
+        return _longBreakSeconds;
+    }
+  }
+
+  void _advanceToNextPhase() {
+    if (_timer == null) {
+      return;
+    }
+
+    if (_phase == PomodoroPhase.focus) {
+      _completedFocusRounds += 1;
+      _phase = _completedFocusRounds % 4 == 0
+          ? PomodoroPhase.longBreak
+          : PomodoroPhase.shortBreak;
+    } else {
+      _phase = PomodoroPhase.focus;
+    }
+
     _timer = TimerEntity(
       id: _timer!.id,
-      durationSeconds: _timer!.durationSeconds,
-      elapsedSeconds: elapsed.clamp(0, _timer!.durationSeconds),
-      isRunning: !completed,
-      isCompleted: completed,
+      durationSeconds: _durationForPhase(_phase),
+      elapsedSeconds: 0,
+      isRunning: true,
+      isCompleted: false,
     );
-    if (completed) _ticker?.cancel();
-    notifyListeners();
   }
 
   @override

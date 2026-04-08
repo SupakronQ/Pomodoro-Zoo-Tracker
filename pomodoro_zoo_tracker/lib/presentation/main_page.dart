@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pomodoro_zoo_tracker/core/widgets/zoo_header.dart';
-import 'package:provider/provider.dart';
 // Import Widget Bottom Nav ของคุณ
 import '../core/widgets/zoo_bottom_nav.dart';
 // Import หน้าต่างๆ (สมมติชื่อไฟล์)
@@ -8,22 +7,34 @@ import '../../features/timer/presentation/pages/timer_page.dart';
 import '../../features/category/presentation/pages/category_management_page.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  final int initialIndex;
+  final String? categoryTitleToEdit;
+
+  const MainPage({
+    super.key,
+    this.initialIndex = 0,
+    this.categoryTitleToEdit,
+  });
 
   @override
   State<MainPage> createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+  late final List<Widget> _pages;
 
-  // 1. รายการหน้าจอที่จะแสดงผล เรียงตามลำดับ Bottom Nav
-  final List<Widget> _pages = [
-    const TimerPage(),
-    const CategoryManagementPage(),      
-    const Center(child: Text("STATS PAGE")),      
-    const Center(child: Text("ZOO PAGE")),    
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex.clamp(0, 3);
+    _pages = [
+      const TimerPage(),
+      CategoryManagementPage(categoryTitleToEdit: widget.categoryTitleToEdit),
+      const Center(child: Text("STATS PAGE")),
+      const Center(child: Text("ZOO PAGE")),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
