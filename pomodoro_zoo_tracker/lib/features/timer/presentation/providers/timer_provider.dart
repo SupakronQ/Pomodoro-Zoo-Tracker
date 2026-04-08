@@ -4,6 +4,7 @@ import '../../domain/entities/timer.dart';
 import '../../domain/usecases/start_timer.dart';
 import '../../domain/usecases/pause_timer.dart';
 import '../../domain/usecases/reset_timer.dart';
+import '../../domain/usecases/save_timer_session.dart';
 
 // Provider — UI State สำหรับ Timer
 // Logic หนักอยู่ใน UseCases ไม่ใช่ที่นี่
@@ -11,11 +12,15 @@ class TimerProvider extends ChangeNotifier {
   final StartTimer startTimerUseCase;
   final PauseTimer pauseTimerUseCase;
   final ResetTimer resetTimerUseCase;
+  final SaveTimerSession saveTimerSessionUseCase;
+
+  String? selectedCategoryId;
 
   TimerProvider({
     required this.startTimerUseCase,
     required this.pauseTimerUseCase,
     required this.resetTimerUseCase,
+    required this.saveTimerSessionUseCase,
   });
 
   TimerEntity? _timer;
@@ -23,7 +28,7 @@ class TimerProvider extends ChangeNotifier {
 
   TimerEntity? get timer => _timer;
 
-  int get remainingSeconds => _timer?.remainingSeconds ?? 25 * 60;
+  int get remainingSeconds => _timer?.remainingSeconds ?? 5;
   bool get isRunning => _timer?.isRunning ?? false;
   bool get isCompleted => _timer?.isCompleted ?? false;
   double get progress => _timer?.progress ?? 0;
@@ -35,7 +40,7 @@ class TimerProvider extends ChangeNotifier {
   }
 
   Future<void> start() async {
-    _timer = await startTimerUseCase();
+    _timer = await startTimerUseCase(durationSeconds: 2 * 60);
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
     notifyListeners();
@@ -68,7 +73,15 @@ class TimerProvider extends ChangeNotifier {
       isRunning: !completed,
       isCompleted: completed,
     );
-    if (completed) _ticker?.cancel();
+    if (completed) {
+      _ticker?.cancel();
+      final durationMinutes = _timer!.durationSeconds ~/ 60;
+      saveTimerSessionUseCase(
+        durationMinutes: durationMinutes > 0 ? durationMinutes : 1, // ensure at least 1 min or correct conversion
+        categoryId: selectedCategoryId,
+        date: DateTime.now(),
+      );
+    }
     notifyListeners();
   }
 
