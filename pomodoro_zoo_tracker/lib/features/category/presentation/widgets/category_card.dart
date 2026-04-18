@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pomodoro_zoo_tracker/core/theme/app_colors.dart';
-import 'package:provider/provider.dart';
 
 class CategoryCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final double progress; // 0.0 to 1.0
   final String stats;    // e.g., "3 / 4h"
+  final bool showProgress;
 
   const CategoryCard({
     super.key,
@@ -14,6 +14,7 @@ class CategoryCard extends StatelessWidget {
     required this.icon,
     required this.progress,
     required this.stats,
+    this.showProgress = true,
   });
 
   @override
@@ -68,19 +69,20 @@ class CategoryCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                // Progress Bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: AppColors.surfaceContainer,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary.withOpacity(progress < 0.3 ? 0.3 : 1.0),
+                if (showProgress) ...[
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: AppColors.surfaceContainer,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primary.withOpacity(progress < 0.3 ? 0.3 : 1.0),
+                      ),
+                      minHeight: 6,
                     ),
-                    minHeight: 6,
                   ),
-                ),
+                ],
               ],
             ),
           ),

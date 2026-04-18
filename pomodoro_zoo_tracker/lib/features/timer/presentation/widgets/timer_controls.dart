@@ -4,6 +4,7 @@ import 'package:pomodoro_zoo_tracker/core/theme/app_colors.dart';
 class TimerControls extends StatelessWidget {
   final bool isRunning;
   final bool isCompleted;
+  final bool canStart;
   final VoidCallback onStart;
   final VoidCallback onPause;
   final VoidCallback onReset;
@@ -12,6 +13,7 @@ class TimerControls extends StatelessWidget {
     super.key,
     required this.isRunning,
     required this.isCompleted,
+    this.canStart = true,
     required this.onStart,
     required this.onPause,
     required this.onReset,
@@ -45,7 +47,9 @@ class TimerControls extends StatelessWidget {
               ],
             ),
             child: ElevatedButton(
-              onPressed: isRunning ? onPause : onStart,
+              onPressed: isRunning
+                  ? onPause
+                  : (canStart ? onStart : null),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
