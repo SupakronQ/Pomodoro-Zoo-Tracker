@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pomodoro_zoo_tracker/presentation/main_page.dart';
 import '../providers/timer_provider.dart';
 import 'package:provider/provider.dart';
+import '../../../coin/presentation/providers/coin_provider.dart';
+import '../../../coin/domain/usecases/calculate_coins.dart';
 import '../widgets/timer_circle.dart';
 import '../widgets/timer_controls.dart';
 
@@ -136,6 +138,7 @@ class _TimerPageState extends State<TimerPage> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<TimerProvider>();
+    final coinProvider = context.watch<CoinProvider>();
 
     return Scaffold(
       // backgroundColor: const Color(0xFFF5F0E8),
@@ -172,6 +175,15 @@ class _TimerPageState extends State<TimerPage> {
                     onPause: provider.pause,
                     onReset: provider.reset,
                   ),
+                  const SizedBox(height: 16),
+
+                  // -- Coin Progress Indicator --
+                  _buildCoinProgress(coinProvider),
+                  const SizedBox(height: 8),
+
+                  // -- Debug: Skip to 5s before 1 hour --
+                  _buildSkipTestButton(provider, coinProvider),
+
                   if (!_canStartTimer) ...[
                     const SizedBox(height: 12),
                     const Text(
@@ -265,6 +277,118 @@ class _TimerPageState extends State<TimerPage> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCoinProgress(CoinProvider coinProvider) {
+    final focusMinutes = coinProvider.totalFocusSeconds ~/ 60;
+    final focusSecs = coinProvider.totalFocusSeconds % 60;
+    final untilNext = coinProvider.secondsUntilNextCoin;
+    final untilMin = untilNext ~/ 60;
+    final untilSec = untilNext % 60;
+    final progressToNextCoin = 1.0 -
+        (untilNext / CalculateCoins.secondsPerHour).clamp(0.0, 1.0);
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F7F1),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFDDE6DE)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.monetization_on, size: 16, color: Color(0xFF7FB77E)),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${coinProvider.coinBalance} Coins',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: Color(0xFF356939),
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  'Focus: ${focusMinutes.toString().padLeft(2, '0')}:${focusSecs.toString().padLeft(2, '0')}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6F8B71),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progressToNextCoin,
+                minHeight: 6,
+                backgroundColor: const Color(0xFFE4EDE5),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4B9E58)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Next coin in ${untilMin.toString().padLeft(2, '0')}:${untilSec.toString().padLeft(2, '0')}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF8BA18D),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSkipTestButton(TimerProvider timerProvider, CoinProvider coinProvider) {
+    return TextButton.icon(
+      onPressed: () async {
+        coinProvider.skipToBeforeOneHour();
+        if (timerProvider.phase != PomodoroPhase.focus || !timerProvider.isRunning) {
+          await timerProvider.reset();
+          await timerProvider.start();
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '⏩ Skipped to 5s before coin award! (Focus: ${coinProvider.formatSeconds(coinProvider.totalFocusSeconds)})',
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      icon: const Icon(Icons.fast_forward, size: 16),
+      label: const Text(
+        '⏩ SKIP TO 5s BEFORE 1HR (TEST)',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 11,
+          letterSpacing: 0.5,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        foregroundColor: const Color(0xFFB67B1F),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        backgroundColor: const Color(0xFFFFF8E8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Color(0xFFE8D5A8)),
         ),
       ),
     );

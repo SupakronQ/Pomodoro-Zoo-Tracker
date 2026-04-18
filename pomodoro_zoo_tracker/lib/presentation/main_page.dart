@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pomodoro_zoo_tracker/core/widgets/zoo_header.dart';
+import 'package:provider/provider.dart';
 // Import Widget Bottom Nav ของคุณ
 import '../core/widgets/zoo_bottom_nav.dart';
 // Import หน้าต่างๆ (สมมติชื่อไฟล์)
 import '../../features/timer/presentation/pages/timer_page.dart';
 import '../../features/category/presentation/pages/category_management_page.dart';
+import '../../features/coin/presentation/providers/coin_provider.dart';
 
 class MainPage extends StatefulWidget {
   final int initialIndex;
@@ -38,10 +40,12 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final coinProvider = context.watch<CoinProvider>();
+
     return Scaffold(
       appBar: ZooHeader(
           title: "Zoo Tracker",
-          coins: 250,
+          coins: coinProvider.coinBalance,
           onCoinTap: () => print("Coin clicked!"),
         ),
       // 2. ใช้ IndexedStack เพื่อรักษา State ของแต่ละหน้า (เช่น Timer จะไม่หยุดเดิน)

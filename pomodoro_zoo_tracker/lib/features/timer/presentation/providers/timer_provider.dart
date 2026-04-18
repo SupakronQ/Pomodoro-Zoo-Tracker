@@ -14,6 +14,9 @@ class TimerProvider extends ChangeNotifier {
   final PauseTimer pauseTimerUseCase;
   final ResetTimer resetTimerUseCase;
 
+  /// Callback ที่จะถูกเรียกทุกวินาทีที่ timer tick ใน focus phase
+  VoidCallback? onFocusTick;
+
   TimerProvider({
     required this.startTimerUseCase,
     required this.pauseTimerUseCase,
@@ -103,6 +106,12 @@ class TimerProvider extends ChangeNotifier {
 
   void _tick() {
     if (_timer == null || !_timer!.isRunning) return;
+
+    // นับ focus second สำหรับระบบ coin
+    if (_phase == PomodoroPhase.focus) {
+      onFocusTick?.call();
+    }
+
     final elapsed = _timer!.elapsedSeconds + 1;
     final completed = elapsed >= _timer!.durationSeconds;
 
