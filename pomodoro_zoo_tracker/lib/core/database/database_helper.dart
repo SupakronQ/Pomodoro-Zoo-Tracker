@@ -386,6 +386,25 @@ class DatabaseHelper {
     }
   }
 
+  Future<String> getOrCreateGuestUser() async {
+    final db = await database;
+    final result = await db.query('users', limit: 1);
+    if (result.isNotEmpty) {
+      return result.first['id'] as String;
+    }
+
+    final newId = _uuid.v4();
+    await db.insert('users', {
+      'id': newId,
+      'username': 'Guest',
+      'coin_balance': 0,
+      'current_streak': 0,
+      'last_active_date': DateTime.now().toIso8601String(),
+      'created_at': DateTime.now().toIso8601String(),
+    });
+    return newId;
+  }
+
   Future<void> close() async {
     if (_database != null) {
       await _database!.close();

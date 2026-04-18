@@ -3,9 +3,11 @@ import 'package:pomodoro_zoo_tracker/core/widgets/zoo_header.dart';
 import 'package:provider/provider.dart';
 // Import Widget Bottom Nav ของคุณ
 import '../core/widgets/zoo_bottom_nav.dart';
-// Import หน้าต่างๆ (สมมติชื่อไฟล์)
+// Import หน้าต่างๆ
 import '../../features/timer/presentation/pages/timer_page.dart';
 import '../../features/category/presentation/pages/category_management_page.dart';
+import '../../features/stats/presentation/pages/stats_page.dart';
+import '../../features/coin/presentation/providers/coin_provider.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -21,18 +23,25 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     const TimerPage(),
     const CategoryManagementPage(),      
-    const Center(child: Text("STATS PAGE")),      
+    const StatsPage(),      
     const Center(child: Text("ZOO PAGE")),    
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: ZooHeader(
-          title: "Zoo Tracker",
-          coins: 250,
-          onCoinTap: () => print("Coin clicked!"),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight + 1),
+        child: Consumer<CoinProvider>(
+          builder: (context, coinProvider, child) {
+            return ZooHeader(
+              title: "Zoo Tracker",
+              coins: coinProvider.balance,
+              onCoinTap: () => print("Coin clicked!"),
+            );
+          },
         ),
+      ),
       // 2. ใช้ IndexedStack เพื่อรักษา State ของแต่ละหน้า (เช่น Timer จะไม่หยุดเดิน)
       body: IndexedStack(
         index: _currentIndex,
@@ -51,4 +60,4 @@ class _MainPageState extends State<MainPage> {
       ),
     );
   }
-}
+}

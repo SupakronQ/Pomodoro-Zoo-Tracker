@@ -4,6 +4,6 @@ import '../entities/timer.dart';
 abstract class TimerRepository {
   Future<TimerEntity?> getLastTimer();
   Future<void> saveTimer(TimerEntity timer);
-  Future<void> saveTimerSession(int durationMinutes, String? categoryId, DateTime date);
+  Future<void> saveTimerSession(int durationMinutes, String? categoryId, DateTime date, {String? userId});
   Future<void> deleteTimer(int id);
 }

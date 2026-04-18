@@ -26,7 +26,7 @@ class TimerRepositoryImpl implements TimerRepository {
   }
 
   @override
-  Future<void> saveTimerSession(int durationMinutes, String? categoryId, DateTime date) async {
-    await dataSource.saveTimerSession(durationMinutes, categoryId, date);
+  Future<void> saveTimerSession(int durationMinutes, String? categoryId, DateTime date, {String? userId}) async {
+    await dataSource.saveTimerSession(durationMinutes, categoryId, date, userId: userId);
   }
 }

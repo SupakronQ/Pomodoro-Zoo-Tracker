@@ -9,7 +9,8 @@ class SaveTimerSession {
     required int durationMinutes,
     String? categoryId,
     required DateTime date,
+    String? userId,
   }) async {
-    await repository.saveTimerSession(durationMinutes, categoryId, date);
+    await repository.saveTimerSession(durationMinutes, categoryId, date, userId: userId);
   }
 }

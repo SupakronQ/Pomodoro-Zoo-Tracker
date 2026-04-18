@@ -28,13 +28,14 @@ class TimerLocalDataSource {
     // TODO: db.delete('timers', where: 'id = ?', whereArgs: [id])
   }
 
-  Future<void> saveTimerSession(int durationMinutes, String? categoryId, DateTime date) async {
+  Future<void> saveTimerSession(int durationMinutes, String? categoryId, DateTime date, {String? userId}) async {
     final sessionDb = await db;
     await sessionDb.insert('pomodoro_sessions', {
       'id': const Uuid().v4(),
+      'user_id': userId,
       'category_id': categoryId,
       'duration_minutes': durationMinutes,
-      'coins_earned': 0,
+      'coins_earned': durationMinutes, // Assuming 1 coin per minute to give some coins
       'status': 'completed',
       'created_at': date.toIso8601String(),
       'ended_at': date.toIso8601String(),

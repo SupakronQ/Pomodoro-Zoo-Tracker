@@ -15,12 +15,16 @@ class TimerProvider extends ChangeNotifier {
   final SaveTimerSession saveTimerSessionUseCase;
 
   String? selectedCategoryId;
+  String? userId;
+  Function(int coinsEarned)? onSessionComplete;
 
   TimerProvider({
     required this.startTimerUseCase,
     required this.pauseTimerUseCase,
     required this.resetTimerUseCase,
     required this.saveTimerSessionUseCase,
+    this.userId,
+    this.onSessionComplete,
   });
 
   TimerEntity? _timer;
@@ -76,11 +80,16 @@ class TimerProvider extends ChangeNotifier {
     if (completed) {
       _ticker?.cancel();
       final durationMinutes = _timer!.durationSeconds ~/ 60;
+      final int finalDuration = durationMinutes > 0 ? durationMinutes : 1;
       saveTimerSessionUseCase(
-        durationMinutes: durationMinutes > 0 ? durationMinutes : 1, // ensure at least 1 min or correct conversion
+        durationMinutes: finalDuration, // ensure at least 1 min or correct conversion
         categoryId: selectedCategoryId,
         date: DateTime.now(),
+        userId: userId,
       );
+      if (onSessionComplete != null) {
+        onSessionComplete!(finalDuration); // pass coins earned (1 per min)
+      }
     }
     notifyListeners();
   }
