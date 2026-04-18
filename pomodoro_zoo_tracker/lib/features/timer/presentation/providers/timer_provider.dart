@@ -4,6 +4,7 @@ import '../../domain/entities/timer.dart';
 import '../../domain/usecases/start_timer.dart';
 import '../../domain/usecases/pause_timer.dart';
 import '../../domain/usecases/reset_timer.dart';
+import '../../domain/usecases/save_timer_session.dart';
 
 enum PomodoroPhase { focus, shortBreak, longBreak }
 
@@ -13,11 +14,19 @@ class TimerProvider extends ChangeNotifier {
   final StartTimer startTimerUseCase;
   final PauseTimer pauseTimerUseCase;
   final ResetTimer resetTimerUseCase;
+  final SaveTimerSession saveTimerSessionUseCase;
+
+  String? selectedCategoryId;
+  String? userId;
+  Function(int coinsEarned)? onSessionComplete;
 
   TimerProvider({
     required this.startTimerUseCase,
     required this.pauseTimerUseCase,
     required this.resetTimerUseCase,
+    required this.saveTimerSessionUseCase,
+    this.userId,
+    this.onSessionComplete,
   });
 
   TimerEntity? _timer;
@@ -68,7 +77,7 @@ class TimerProvider extends ChangeNotifier {
         isCompleted: false,
       );
     } else {
-      _timer = await startTimerUseCase();
+      _timer = await startTimerUseCase(durationSeconds: 2 * 60);
       _timer = TimerEntity(
         id: _timer!.id,
         durationSeconds: _durationForPhase(_phase),
