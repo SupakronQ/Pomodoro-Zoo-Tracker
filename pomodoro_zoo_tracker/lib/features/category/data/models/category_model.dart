@@ -6,6 +6,7 @@ class CategoryModel extends CategoryEntity {
     super.userId,
     required super.name,
     required super.colorHex,
+    super.iconCodePoint,
   });
 
   factory CategoryModel.fromMap(Map<String, dynamic> map) {
@@ -14,6 +15,7 @@ class CategoryModel extends CategoryEntity {
       userId: map['user_id'] as String?,
       name: map['name'] as String,
       colorHex: map['color_hex'] as String,
+      iconCodePoint: (map['icon_code_point'] as int?) ?? 0xe4c2,
     );
   }
 
@@ -23,6 +25,7 @@ class CategoryModel extends CategoryEntity {
       'user_id': userId,
       'name': name,
       'color_hex': colorHex,
+      'icon_code_point': iconCodePoint,
     };
   }
 
@@ -32,6 +35,7 @@ class CategoryModel extends CategoryEntity {
       userId: entity.userId,
       name: entity.name,
       colorHex: entity.colorHex,
+      iconCodePoint: entity.iconCodePoint,
     );
   }
 }

@@ -9,11 +9,14 @@ class CategoryProvider extends ChangeNotifier {
 
   List<CategoryEntity> _categories = [];
   bool _isLoading = false;
+  String? _currentUserId;
 
   List<CategoryEntity> get categories => _categories;
   bool get isLoading => _isLoading;
+  String? get currentUserId => _currentUserId;
 
   Future<void> loadCategories({String? userId}) async {
+    _currentUserId = userId;
     _isLoading = true;
     notifyListeners();
 
@@ -25,16 +28,16 @@ class CategoryProvider extends ChangeNotifier {
 
   Future<void> createCategory(CategoryEntity category) async {
     await repository.createCategory(category);
-    await loadCategories(userId: category.userId);
+    await loadCategories(userId: _currentUserId);
   }
 
   Future<void> updateCategory(CategoryEntity category) async {
     await repository.updateCategory(category);
-    await loadCategories(userId: category.userId);
+    await loadCategories(userId: _currentUserId);
   }
 
   Future<void> deleteCategory(String id, {String? currentUserId}) async {
     await repository.deleteCategory(id);
-    await loadCategories(userId: currentUserId);
+    await loadCategories(userId: currentUserId ?? _currentUserId);
   }
 }

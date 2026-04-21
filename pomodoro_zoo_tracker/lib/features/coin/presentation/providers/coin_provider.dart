@@ -16,15 +16,33 @@ class CoinProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addCoins(int amount, String transactionTypeId, {String? referenceId}) async {
+  Future<void> addCoins(
+    int amount,
+    String transactionTypeId, {
+    String? referenceId,
+  }) async {
     if (currentUserId == null) return;
-    await repository.addCoins(currentUserId!, amount, transactionTypeId, referenceId: referenceId);
+    await repository.addCoins(
+      currentUserId!,
+      amount,
+      transactionTypeId,
+      referenceId: referenceId,
+    );
     await loadBalance(currentUserId!);
   }
 
-  Future<void> spendCoins(int amount, String transactionTypeId, {String? referenceId}) async {
+  Future<void> spendCoins(
+    int amount,
+    String transactionTypeId, {
+    String? referenceId,
+  }) async {
     if (currentUserId == null) return;
-    await repository.spendCoins(currentUserId!, amount, transactionTypeId, referenceId: referenceId);
+    await repository.spendCoins(
+      currentUserId!,
+      amount,
+      transactionTypeId,
+      referenceId: referenceId,
+    );
     await loadBalance(currentUserId!);
   }
 }

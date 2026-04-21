@@ -22,7 +22,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'pomodoro_zoo.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -86,6 +86,7 @@ class DatabaseHelper {
         user_id TEXT,
         name TEXT,
         color_hex TEXT,
+        icon_code_point INTEGER DEFAULT 58920,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
@@ -317,7 +318,7 @@ class DatabaseHelper {
       {'name': 'goal_completion', 'display_name': 'Completed Goal'},
       {'name': 'ad_reward', 'display_name': 'Ad Reward'},
       {'name': 'gacha_pull', 'display_name': 'Gacha Pull'},
-      {'name': 'food_purchase', 'display_name': 'Food Purchase'}
+      {'name': 'food_purchase', 'display_name': 'Food Purchase'},
     ];
     for (final t in txnTypes) {
       await db.insert('transaction_types', {'id': _uuid.v4(), ...t});
@@ -341,8 +342,8 @@ class DatabaseHelper {
 
     // Default categories
     final categories = [
-      {'name': 'Work', 'color_hex': '#4CAF50'},
-      {'name': 'Study', 'color_hex': '#2196F3'},
+      {'name': 'Work', 'color_hex': '#4CAF50', 'icon_code_point': 0xe8f9},
+      {'name': 'Study', 'color_hex': '#2196F3', 'icon_code_point': 0xef4c},
     ];
     for (final c in categories) {
       await db.insert('categories', {'id': _uuid.v4(), ...c});
@@ -375,7 +376,7 @@ class DatabaseHelper {
         'decorations',
         'animals',
         'items',
-        'transactions'
+        'transactions',
       ];
       for (final table in tablesToDrop) {
         await db.execute('DROP TABLE IF EXISTS $table');
@@ -383,6 +384,10 @@ class DatabaseHelper {
 
       // Re-create the tables
       await _onCreate(db, newVersion);
+    } else if (oldVersion < 3) {
+      await db.execute(
+        'ALTER TABLE categories ADD COLUMN icon_code_point INTEGER DEFAULT 58920',
+      );
     }
   }
 

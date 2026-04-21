@@ -4,14 +4,16 @@ import 'package:pomodoro_zoo_tracker/core/theme/app_colors.dart';
 class CategoryCard extends StatelessWidget {
   final String title;
   final IconData icon;
+  final Color color;
   final double progress; // 0.0 to 1.0
-  final String stats;    // e.g., "3 / 4h"
+  final String stats;
   final bool showProgress;
 
   const CategoryCard({
     super.key,
     required this.title,
     required this.icon,
+    required this.color,
     required this.progress,
     required this.stats,
     this.showProgress = true,
@@ -24,11 +26,11 @@ class CategoryCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(999), // Pill shape
+        borderRadius: BorderRadius.circular(999),
         border: Border.all(color: AppColors.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -36,18 +38,16 @@ class CategoryCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon Container
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primaryContainer.withOpacity(0.2),
+              color: color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: AppColors.primary),
+            child: Icon(icon, color: color),
           ),
           const SizedBox(width: 16),
-          // Content
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,14 +57,17 @@ class CategoryCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     Text(
                       stats,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                        color: color,
                       ),
                     ),
                   ],
@@ -77,7 +80,7 @@ class CategoryCard extends StatelessWidget {
                       value: progress,
                       backgroundColor: AppColors.surfaceContainer,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.primary.withOpacity(progress < 0.3 ? 0.3 : 1.0),
+                        color.withValues(alpha: progress < 0.3 ? 0.3 : 1.0),
                       ),
                       minHeight: 6,
                     ),

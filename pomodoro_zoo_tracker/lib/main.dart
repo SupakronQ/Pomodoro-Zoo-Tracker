@@ -19,6 +19,11 @@ import 'features/category/data/datasources/category_local_datasource.dart';
 import 'features/category/data/repositories/category_repository_impl.dart';
 import 'features/category/presentation/providers/category_provider.dart';
 
+// Goal feature
+import 'features/goal/data/datasources/goal_local_datasource.dart';
+import 'features/goal/data/repositories/goal_repository_impl.dart';
+import 'features/goal/presentation/providers/goal_provider.dart';
+
 // Coin feature
 import 'features/coin/data/datasources/coin_local_datasource.dart';
 import 'features/coin/data/repositories/coin_repository_impl.dart';
@@ -31,11 +36,11 @@ import 'features/stats/presentation/providers/stats_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Database
   final dbHelper = DatabaseHelper();
   await dbHelper.database;
-  
+
   // Get or Create Guest User
   final guestUserId = await dbHelper.getOrCreateGuestUser();
 
@@ -51,14 +56,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Wiring dependency injection
     final dbHelper = DatabaseHelper();
-    
+
     // Timer
     final timerDataSource = TimerLocalDataSource(dbHelper);
     final timerRepository = TimerRepositoryImpl(timerDataSource);
-    
+
     // Category
     final categoryDataSource = CategoryLocalDataSource(dbHelper);
     final categoryRepository = CategoryRepositoryImpl(categoryDataSource);
+
+    // Goal
+    final goalDataSource = GoalLocalDataSource(dbHelper);
+    final goalRepository = GoalRepositoryImpl(goalDataSource);
 
     // Coin
     final coinDataSource = CoinLocalDataSource(dbHelper);
@@ -71,15 +80,28 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => CategoryProvider(repository: categoryRepository)..loadCategories(userId: guestUserId),
+          create: (_) =>
+              CategoryProvider(repository: categoryRepository)
+                ..loadCategories(userId: guestUserId),
         ),
         ChangeNotifierProvider(
-          create: (_) => CoinProvider(repository: coinRepository)..loadBalance(guestUserId),
+          create: (_) => GoalProvider(repository: goalRepository)..loadGoals(),
         ),
         ChangeNotifierProvider(
-          create: (_) => StatsProvider(repository: statsRepository)..loadStats(userId: guestUserId),
+          create: (_) =>
+              CoinProvider(repository: coinRepository)
+                ..loadBalance(guestUserId),
         ),
-        ChangeNotifierProxyProvider2<CoinProvider, StatsProvider, TimerProvider>(
+        ChangeNotifierProvider(
+          create: (_) =>
+              StatsProvider(repository: statsRepository)
+                ..loadStats(userId: guestUserId),
+        ),
+        ChangeNotifierProxyProvider2<
+          CoinProvider,
+          StatsProvider,
+          TimerProvider
+        >(
           create: (context) => TimerProvider(
             startTimerUseCase: StartTimer(timerRepository),
             pauseTimerUseCase: PauseTimer(timerRepository),

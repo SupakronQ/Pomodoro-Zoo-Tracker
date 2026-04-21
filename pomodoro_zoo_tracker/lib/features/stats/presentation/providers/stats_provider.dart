@@ -22,24 +22,30 @@ class StatsProvider extends ChangeNotifier {
   Map<String, dynamic> get productivityScore => _productivityScore;
   bool get isLoading => _isLoading;
 
-  int get totalMinutes => _stats.fold(0, (sum, entry) => sum + entry.totalMinutes);
+  int get totalMinutes =>
+      _stats.fold(0, (sum, entry) => sum + entry.totalMinutes);
 
   Future<void> loadStats({String? userId}) async {
     if (userId != null) {
       currentUserId = userId;
     }
-    
+
     _isLoading = true;
     notifyListeners();
 
-    _stats = await repository.getStatsByPeriod(_selectedPeriod, userId: currentUserId);
+    _stats = await repository.getStatsByPeriod(
+      _selectedPeriod,
+      userId: currentUserId,
+    );
 
     // Also load the overarching data regardless of current period selected
     // Note: If you want these to change based on selected period, you'd adjust here.
-    // For now, based on mock, 'Weekly Activity' and 'Productivity Score' seem static 
+    // For now, based on mock, 'Weekly Activity' and 'Productivity Score' seem static
     // or weekly based. We will load them globally.
     _weeklyActivity = await repository.getWeeklyActivity(userId: currentUserId);
-    _productivityScore = await repository.getProductivityScore(userId: currentUserId);
+    _productivityScore = await repository.getProductivityScore(
+      userId: currentUserId,
+    );
 
     _isLoading = false;
     notifyListeners();
@@ -52,4 +58,3 @@ class StatsProvider extends ChangeNotifier {
     }
   }
 }
-
