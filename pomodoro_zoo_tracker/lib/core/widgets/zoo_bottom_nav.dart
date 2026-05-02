@@ -38,10 +38,19 @@ class ZooBottomNav extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _buildNavItem(0, Icons.timer_outlined, Icons.timer, "FOCUS"),
-                  _buildNavItem(1, Icons.category_outlined, Icons.category, "CATEGORY"),
-                  _buildNavItem(2, Icons.leaderboard_outlined, Icons.leaderboard, "STATS"),
+                  _buildNavItem(
+                    1,
+                    Icons.category_outlined,
+                    Icons.category,
+                    "CATEGORY",
+                  ),
+                  _buildNavItem(
+                    2,
+                    Icons.leaderboard_outlined,
+                    Icons.leaderboard,
+                    "STATS",
+                  ),
                   _buildNavItem(3, Icons.pets_outlined, Icons.pets, "ZOO"),
-                  // _buildNavItem(4, Icons.settings_outlined, Icons.settings, "SETTINGS"),
                 ],
               ),
             ),
@@ -51,7 +60,12 @@ class ZooBottomNav extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, IconData activeIcon, String label) {
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    IconData activeIcon,
+    String label,
+  ) {
     bool isActive = currentIndex == index;
 
     return GestureDetector(
@@ -60,20 +74,19 @@ class ZooBottomNav extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
-        
+
         // --- แก้ไข Padding: ปรับตามสถานะ Active/Inactive ---
         // เมื่อ Inactive (แสดงแค่ไอคอน) ใช้ padding น้อยๆ รอบไอคอน
         // เมื่อ Active (แคปซูล) ใช้ padding ด้านข้างมากกว่าปกติเพื่อให้ดูพรีเมียม
-        padding: isActive 
-            ? const EdgeInsets.symmetric(horizontal: 20, vertical: 10) 
+        padding: isActive
+            ? const EdgeInsets.symmetric(horizontal: 20, vertical: 10)
             : const EdgeInsets.all(12), // padding รอบๆ ไอคอนกลมๆ
         // -----------------------------------------------
-        
         decoration: BoxDecoration(
           color: isActive ? AppColors.secondaryContainer : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
         ),
-        
+
         // --- แก้ไข Column: เพิ่ม AnimatedSwitcher เพื่อความลื่นไหล ---
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -82,7 +95,7 @@ class ZooBottomNav extends StatelessWidget {
               isActive ? activeIcon : icon,
               color: isActive ? AppColors.onSurface : AppColors.secondary,
             ),
-            
+
             // --- แก้ไข: ซ่อน Label เมื่อไม่ Active ---
             // ใช้ AnimatedSwitcher เพื่อให้ตัวหนังสือค่อยๆ ปรากฏขึ้น/หายไป
             AnimatedSwitcher(
@@ -92,9 +105,12 @@ class ZooBottomNav extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         label.toUpperCase(),
-                        key: ValueKey('label_$index'), // สำคัญสำหรับ AnimatedSwitcher
+                        key: ValueKey(
+                          'label_$index',
+                        ), // สำคัญสำหรับ AnimatedSwitcher
                         style: TextStyle(
-                          fontSize: 11, // เพิ่มขนาดได้นิดหน่อยเพราะพื้นที่เหลือเยอะ
+                          fontSize:
+                              11, // เพิ่มขนาดได้นิดหน่อยเพราะพื้นที่เหลือเยอะ
                           fontWeight: FontWeight.bold,
                           color: AppColors.onSurface,
                           letterSpacing: 0.5,

@@ -1,7 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/database/database_helper.dart';
-import '../models/coin_transaction_model.dart';
 
 class CoinLocalDataSource {
   final DatabaseHelper dbHelper;
@@ -25,20 +24,41 @@ class CoinLocalDataSource {
     return 0; // default if not found
   }
 
-  Future<void> addCoins(String userId, int amount, String transactionTypeId, {String? referenceId}) async {
+  Future<void> addCoins(
+    String userId,
+    int amount,
+    String transactionTypeId, {
+    String? referenceId,
+  }) async {
     final database = await db;
     await database.transaction((txn) async {
       // Get current balance
-      final result = await txn.query('users', columns: ['coin_balance'], where: 'id = ?', whereArgs: [userId]);
-      int currentBalance = result.isNotEmpty ? result.first['coin_balance'] as int : 0;
-      
+      final result = await txn.query(
+        'users',
+        columns: ['coin_balance'],
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+      int currentBalance = result.isNotEmpty
+          ? result.first['coin_balance'] as int
+          : 0;
+
       int newBalance = currentBalance + amount;
-      
+
       // Update balance
-      await txn.update('users', {'coin_balance': newBalance}, where: 'id = ?', whereArgs: [userId]);
-      
-      // Get type ID 
-      final typeResult = await txn.query('transaction_types', where: 'name = ?', whereArgs: [transactionTypeId]);
+      await txn.update(
+        'users',
+        {'coin_balance': newBalance},
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+
+      // Get type ID
+      final typeResult = await txn.query(
+        'transaction_types',
+        where: 'name = ?',
+        whereArgs: [transactionTypeId],
+      );
       String resolvedTypeId = transactionTypeId;
       if (typeResult.isNotEmpty) {
         resolvedTypeId = typeResult.first['id'] as String;
@@ -57,20 +77,41 @@ class CoinLocalDataSource {
     });
   }
 
-  Future<void> spendCoins(String userId, int amount, String transactionTypeId, {String? referenceId}) async {
+  Future<void> spendCoins(
+    String userId,
+    int amount,
+    String transactionTypeId, {
+    String? referenceId,
+  }) async {
     final database = await db;
     await database.transaction((txn) async {
-      final result = await txn.query('users', columns: ['coin_balance'], where: 'id = ?', whereArgs: [userId]);
-      int currentBalance = result.isNotEmpty ? result.first['coin_balance'] as int : 0;
-      
+      final result = await txn.query(
+        'users',
+        columns: ['coin_balance'],
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+      int currentBalance = result.isNotEmpty
+          ? result.first['coin_balance'] as int
+          : 0;
+
       if (currentBalance < amount) {
         throw Exception('Insufficient balance');
       }
-      
+
       int newBalance = currentBalance - amount;
-      await txn.update('users', {'coin_balance': newBalance}, where: 'id = ?', whereArgs: [userId]);
-      
-      final typeResult = await txn.query('transaction_types', where: 'name = ?', whereArgs: [transactionTypeId]);
+      await txn.update(
+        'users',
+        {'coin_balance': newBalance},
+        where: 'id = ?',
+        whereArgs: [userId],
+      );
+
+      final typeResult = await txn.query(
+        'transaction_types',
+        where: 'name = ?',
+        whereArgs: [transactionTypeId],
+      );
       String resolvedTypeId = transactionTypeId;
       if (typeResult.isNotEmpty) {
         resolvedTypeId = typeResult.first['id'] as String;
@@ -88,14 +129,19 @@ class CoinLocalDataSource {
     });
   }
 
-  Future<List<Map<String, dynamic>>> getTransactionHistory(String userId) async {
+  Future<List<Map<String, dynamic>>> getTransactionHistory(
+    String userId,
+  ) async {
     final database = await db;
-    return await database.rawQuery('''
+    return await database.rawQuery(
+      '''
       SELECT t.*, type.name as type_name
       FROM transactions t
       LEFT JOIN transaction_types type ON t.transaction_type_id = type.id
       WHERE t.user_id = ?
       ORDER BY t.created_at DESC
-    ''', [userId]);
+    ''',
+      [userId],
+    );
   }
 }

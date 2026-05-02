@@ -14,7 +14,9 @@ class CategoryLocalDataSource {
   Future<List<CategoryModel>> getCategories({String? userId}) async {
     final categoryDb = await db;
     // Assuming if userId is null, we fetch 'global' or 'default' categories where user_id is null
-    String whereStr = userId == null ? 'user_id IS NULL' : 'user_id = ? OR user_id IS NULL';
+    String whereStr = userId == null
+        ? 'user_id IS NULL'
+        : 'user_id = ? OR user_id IS NULL';
     List<dynamic> whereArgs = userId == null ? [] : [userId];
 
     final result = await categoryDb.query(
@@ -49,10 +51,11 @@ class CategoryLocalDataSource {
 
   Future<void> deleteCategory(String id) async {
     final categoryDb = await db;
-    await categoryDb.delete(
-      'categories',
-      where: 'id = ?',
-      whereArgs: [id],
+    // Unlink sessions referencing this category to avoid FK constraint violation
+    await categoryDb.rawUpdate(
+      'UPDATE pomodoro_sessions SET category_id = NULL WHERE category_id = ?',
+      [id],
     );
+    await categoryDb.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 }

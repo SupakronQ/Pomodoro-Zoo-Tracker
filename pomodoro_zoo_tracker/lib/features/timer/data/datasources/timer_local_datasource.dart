@@ -28,17 +28,59 @@ class TimerLocalDataSource {
     // TODO: db.delete('timers', where: 'id = ?', whereArgs: [id])
   }
 
-  Future<void> saveTimerSession(int durationMinutes, String? categoryId, DateTime date, {String? userId}) async {
+  Future<void> saveTimerSession(
+    int durationMinutes,
+    String? categoryId,
+    DateTime date, {
+    String? userId,
+    String? goalId,
+  }) async {
     final sessionDb = await db;
     await sessionDb.insert('pomodoro_sessions', {
       'id': const Uuid().v4(),
       'user_id': userId,
       'category_id': categoryId,
+      'goal_id': goalId,
       'duration_minutes': durationMinutes,
-      'coins_earned': durationMinutes, // Assuming 1 coin per minute to give some coins
+      'coins_earned': durationMinutes,
       'status': 'completed',
       'created_at': date.toIso8601String(),
       'ended_at': date.toIso8601String(),
     });
+  }
+
+  /// Returns completed session count for a category (all-time).
+  Future<int> getSessionCountForCategory(
+    String categoryId, {
+    String? userId,
+  }) async {
+    final sessionDb = await db;
+    String where = "category_id = ? AND status = 'completed'";
+    List<dynamic> args = [categoryId];
+    if (userId != null) {
+      where += ' AND (user_id = ? OR user_id IS NULL)';
+      args.add(userId);
+    }
+    final result = await sessionDb.rawQuery(
+      'SELECT COUNT(*) as cnt FROM pomodoro_sessions WHERE $where',
+      args,
+    );
+    return (result.first['cnt'] as num).toInt();
+  }
+
+  /// Returns completed session count for a specific goal (all-time).
+  Future<int> getSessionCountForGoal(String goalId, {String? userId}) async {
+    final sessionDb = await db;
+    String where = "goal_id = ? AND status = 'completed'";
+    List<dynamic> args = [goalId];
+    if (userId != null) {
+      where += ' AND (user_id = ? OR user_id IS NULL)';
+      args.add(userId);
+    }
+    final result = await sessionDb.rawQuery(
+      'SELECT COUNT(*) as cnt FROM pomodoro_sessions WHERE $where',
+      args,
+    );
+    return (result.first['cnt'] as num).toInt();
   }
 }

@@ -8,9 +8,16 @@ class SaveTimerSession {
   Future<void> call({
     required int durationMinutes,
     String? categoryId,
+    String? goalId,
     required DateTime date,
     String? userId,
   }) async {
-    await repository.saveTimerSession(durationMinutes, categoryId, date, userId: userId);
+    await repository.saveTimerSession(
+      durationMinutes,
+      categoryId,
+      date,
+      userId: userId,
+      goalId: goalId,
+    );
   }
 }

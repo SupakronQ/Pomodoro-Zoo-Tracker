@@ -34,6 +34,9 @@ import 'features/stats/data/datasources/stats_local_datasource.dart';
 import 'features/stats/data/repositories/stats_repository_impl.dart';
 import 'features/stats/presentation/providers/stats_provider.dart';
 
+// Settings feature
+import 'features/settings/presentation/providers/timer_settings_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -97,9 +100,11 @@ class MyApp extends StatelessWidget {
               StatsProvider(repository: statsRepository)
                 ..loadStats(userId: guestUserId),
         ),
-        ChangeNotifierProxyProvider2<
+        ChangeNotifierProvider(create: (_) => TimerSettingsProvider()),
+        ChangeNotifierProxyProvider3<
           CoinProvider,
           StatsProvider,
+          TimerSettingsProvider,
           TimerProvider
         >(
           create: (context) => TimerProvider(
@@ -107,17 +112,27 @@ class MyApp extends StatelessWidget {
             pauseTimerUseCase: PauseTimer(timerRepository),
             resetTimerUseCase: ResetTimer(timerRepository),
             saveTimerSessionUseCase: SaveTimerSession(timerRepository),
+            repository: timerRepository,
+            settingsProvider: context.read<TimerSettingsProvider>(),
             userId: guestUserId,
           ),
-          update: (context, coinProvider, statsProvider, previous) {
-            return previous!
-              ..userId = guestUserId
-              ..onSessionComplete = (int coins) {
-                // Award coins and reload stats
-                coinProvider.addCoins(coins, 'pomodoro_session');
-                statsProvider.loadStats(userId: guestUserId);
-              };
-          },
+          update:
+              (
+                context,
+                coinProvider,
+                statsProvider,
+                settingsProvider,
+                previous,
+              ) {
+                return previous!
+                  ..settingsProvider = settingsProvider
+                  ..userId = guestUserId
+                  ..onSessionComplete = (int coins) {
+                    // Award coins and reload stats
+                    coinProvider.addCoins(coins, 'pomodoro_session');
+                    statsProvider.loadStats(userId: guestUserId);
+                  };
+              },
         ),
       ],
       child: MaterialApp(

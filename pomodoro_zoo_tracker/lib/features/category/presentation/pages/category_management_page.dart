@@ -344,9 +344,9 @@ class _CategoryManagementPageState extends State<CategoryManagementPage> {
   String _formatHours(double value) =>
       value % 1 == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
 
-  /// Converts hours (double) → Pomodoro intervals (25 min each).
+  /// Converts hours (double) → target minutes stored in DB.
   static int _hoursToIntervals(double hours) =>
-      (hours * 60 / 25).round().clamp(1, 9999);
+      (hours * 60).round().clamp(1, 99999);
 }
 
 // ---------------------------------------------------------------------------
@@ -421,6 +421,7 @@ class _CategoryModalSheetState extends State<_CategoryModalSheet> {
     for (final g in _goals) {
       g.nameController.dispose();
       g.hoursController.dispose();
+      g.minutesController.dispose();
     }
     super.dispose();
   }
@@ -448,9 +449,11 @@ class _CategoryModalSheetState extends State<_CategoryModalSheet> {
 
   bool _syncHours() {
     for (final g in _goals) {
-      final v = double.tryParse(g.hoursController.text.trim());
-      if (v == null || v <= 0) return false;
-      g.hours = v;
+      final h = int.tryParse(g.hoursController.text.trim()) ?? -1;
+      final m = int.tryParse(g.minutesController.text.trim()) ?? -1;
+      if (h < 0 || m < 0 || m > 59) return false;
+      if (h == 0 && m == 0) return false;
+      g.hours = h + m / 60.0;
     }
     return true;
   }
@@ -499,7 +502,29 @@ class _CategoryModalSheetState extends State<_CategoryModalSheet> {
     );
   }
 
-  void _handleDelete() {
+  void _handleDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Category?'),
+        content: const Text(
+          'This will permanently delete the category and all its goals.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
     Navigator.pop(context);
     widget.onDelete?.call();
   }
@@ -790,48 +815,89 @@ class _CategoryModalSheetState extends State<_CategoryModalSheet> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Hours'),
-                    Text(
-                      'Hours target',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'HOURS',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.secondary,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: goal.hoursController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppColors.surfaceContainerLow,
+                              hintText: '0',
+                              suffixText: 'h',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'MINUTES',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.secondary,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: goal.minutesController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^([0-5]?[0-9]?)$'),
+                              ),
+                            ],
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppColors.surfaceContainerLow,
+                              hintText: '0',
+                              suffixText: 'm',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: goal.hoursController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d*\.?\d{0,1}'),
-                    ),
-                  ],
-                  onChanged: (v) {
-                    final parsed = double.tryParse(v);
-                    if (parsed != null && parsed > 0) goal.hours = parsed;
-                  },
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: AppColors.surfaceContainerLow,
-                    hintText: 'e.g. 1.5',
-                    suffixText: 'h',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 6),
                 SizedBox(
@@ -914,12 +980,12 @@ class _GoalDraft {
   DateTime deadline;
   final TextEditingController nameController;
   final TextEditingController hoursController;
+  final TextEditingController minutesController;
 
   _GoalDraft({required this.name, required this.hours, required this.deadline})
     : nameController = TextEditingController(text: name),
-      hoursController = TextEditingController(
-        text: hours % 1 == 0
-            ? hours.toStringAsFixed(0)
-            : hours.toStringAsFixed(1),
+      hoursController = TextEditingController(text: hours.floor().toString()),
+      minutesController = TextEditingController(
+        text: ((hours - hours.floor()) * 60).round().toString(),
       );
 }

@@ -8,6 +8,7 @@ import '../providers/timer_provider.dart';
 import 'package:provider/provider.dart';
 import '../widgets/timer_circle.dart';
 import '../widgets/timer_controls.dart';
+import '../../../settings/presentation/pages/timer_settings_page.dart';
 
 class TimerPage extends StatefulWidget {
   const TimerPage({Key? key}) : super(key: key);
@@ -61,11 +62,35 @@ class _TimerPageState extends State<TimerPage> {
   }
 
   void _selectCategory(String id, List<GoalEntity> goals) {
+    final provider = context.read<TimerProvider>();
+
+    // Guard: if timer is running or in progress, confirm before switching
+    if (provider.isRunning || provider.progress > 0) {
+      _confirmSwitchWhileRunning(
+        onConfirmed: () async {
+          await provider.reset();
+          if (!mounted) return;
+          _applyCategorySelection(id, goals, provider);
+        },
+      );
+      return;
+    }
+
+    _applyCategorySelection(id, goals, provider);
+  }
+
+  void _applyCategorySelection(
+    String id,
+    List<GoalEntity> goals,
+    TimerProvider provider,
+  ) {
     if (_selectedCategoryId == id) {
       setState(() {
         _selectedCategoryId = null;
         _selectedGoalId = null;
       });
+      provider.selectedCategoryId = null;
+      provider.selectedGoalId = null;
       return;
     }
     setState(() {
@@ -75,6 +100,35 @@ class _TimerPageState extends State<TimerPage> {
         _selectedGoalId = goals.first.id;
       }
     });
+    provider.selectedCategoryId = id;
+    provider.selectedGoalId = goals.length == 1 ? goals.first.id : null;
+  }
+
+  Future<void> _confirmSwitchWhileRunning({
+    required VoidCallback onConfirmed,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Change Focus?'),
+        content: const Text(
+          'The current session is still running.\nSwitching will reset the timer and the session will not be saved.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Running'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Reset & Switch'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) onConfirmed();
   }
 
   @override
@@ -82,6 +136,20 @@ class _TimerPageState extends State<TimerPage> {
     final provider = context.watch<TimerProvider>();
     final categories = context.watch<CategoryProvider>().categories;
     final goalProvider = context.watch<GoalProvider>();
+
+    // Load session counts whenever categories list changes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (categories.isNotEmpty) {
+        final allGoalIds = categories
+            .expand((c) => goalProvider.getGoalsForCategory(c.id))
+            .map((g) => g.id)
+            .toList();
+        context.read<TimerProvider>().loadSessionCounts(
+          categories.map((c) => c.id).toList(),
+          goalIds: allGoalIds,
+        );
+      }
+    });
 
     final selectedGoals = _selectedCategoryId != null
         ? goalProvider.getGoalsForCategory(_selectedCategoryId!)
@@ -99,6 +167,19 @@ class _TimerPageState extends State<TimerPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TimerSettingsPage(),
+                        ),
+                      ),
+                      icon: const Icon(Icons.settings_outlined),
+                      color: const Color(0xFF5E7F62),
+                      tooltip: 'Timer Settings',
+                    ),
+                  ),
                   ZooTimerDisplay(
                     progress: provider.progress,
                     formattedTime: provider.formattedTime,
@@ -180,32 +261,98 @@ class _TimerPageState extends State<TimerPage> {
                           goals: const [],
                           selectedGoalId: _selectedGoalId,
                           goalSelectionRequired: false,
+                          goalSessionCounts: const {},
                           onEdit: null,
-                          onSelectGoal: (goalId) =>
-                              setState(() => _selectedGoalId = goalId),
-                          onTap: () => setState(() {
-                            _selectedCategoryId = null;
-                            _selectedGoalId = null;
-                          }),
+                          onSelectGoal: (goalId) {
+                            if (provider.isRunning || provider.progress > 0) {
+                              _confirmSwitchWhileRunning(
+                                onConfirmed: () async {
+                                  await provider.reset();
+                                  if (!mounted) return;
+                                  setState(() => _selectedGoalId = goalId);
+                                  context.read<TimerProvider>().selectedGoalId =
+                                      goalId;
+                                },
+                              );
+                              return;
+                            }
+                            setState(() => _selectedGoalId = goalId);
+                            context.read<TimerProvider>().selectedGoalId =
+                                goalId;
+                          },
+                          onTap: () {
+                            if (provider.isRunning || provider.progress > 0) {
+                              _confirmSwitchWhileRunning(
+                                onConfirmed: () async {
+                                  await provider.reset();
+                                  if (!mounted) return;
+                                  setState(() {
+                                    _selectedCategoryId = null;
+                                    _selectedGoalId = null;
+                                  });
+                                  context
+                                          .read<TimerProvider>()
+                                          .selectedCategoryId =
+                                      null;
+                                  context.read<TimerProvider>().selectedGoalId =
+                                      null;
+                                },
+                              );
+                              return;
+                            }
+                            setState(() {
+                              _selectedCategoryId = null;
+                              _selectedGoalId = null;
+                            });
+                            context.read<TimerProvider>().selectedCategoryId =
+                                null;
+                            context.read<TimerProvider>().selectedGoalId = null;
+                          },
                         ),
                         // Real categories from provider
                         ...categories.map((cat) {
                           final catGoals = goalProvider.getGoalsForCategory(
                             cat.id,
                           );
+                          final completedSessions = provider.getSessionCount(
+                            cat.id,
+                          );
+                          final goalSessionCounts = {
+                            for (final g in catGoals)
+                              g.id: provider.getGoalSessionCount(g.id),
+                          };
                           return _buildCategoryCard(
                             title: cat.name,
                             category: cat,
                             selected: _selectedCategoryId == cat.id,
                             goals: catGoals,
                             selectedGoalId: _selectedGoalId,
+                            completedSessions: completedSessions,
+                            goalSessionCounts: goalSessionCounts,
                             goalSelectionRequired:
                                 _selectedCategoryId == cat.id &&
                                 catGoals.length > 1,
                             onEdit: () =>
                                 _openCategoryManagerForTitle(cat.name),
-                            onSelectGoal: (goalId) =>
-                                setState(() => _selectedGoalId = goalId),
+                            onSelectGoal: (goalId) {
+                              if (provider.isRunning || provider.progress > 0) {
+                                _confirmSwitchWhileRunning(
+                                  onConfirmed: () async {
+                                    await provider.reset();
+                                    if (!mounted) return;
+                                    setState(() => _selectedGoalId = goalId);
+                                    context
+                                            .read<TimerProvider>()
+                                            .selectedGoalId =
+                                        goalId;
+                                  },
+                                );
+                                return;
+                              }
+                              setState(() => _selectedGoalId = goalId);
+                              context.read<TimerProvider>().selectedGoalId =
+                                  goalId;
+                            },
                             onTap: () => _selectCategory(cat.id, catGoals),
                           );
                         }),
@@ -241,6 +388,8 @@ class _TimerPageState extends State<TimerPage> {
     required VoidCallback? onEdit,
     required ValueChanged<String> onSelectGoal,
     required VoidCallback onTap,
+    int completedSessions = 0,
+    Map<String, int> goalSessionCounts = const {},
   }) {
     final Color accentColor = category != null
         ? _parseHexColor(category.colorHex)
@@ -248,7 +397,11 @@ class _TimerPageState extends State<TimerPage> {
     final IconData catIcon = category != null
         ? IconData(category.iconCodePoint, fontFamily: 'MaterialIcons')
         : Icons.all_inclusive;
-    final double totalGoalHours = goals.fold(0.0, (s, g) => s + g.targetHours);
+    final int totalMinutes = goals.fold(0, (s, g) => s + g.targetIntervals);
+    final int totalIntervalSessions = totalMinutes ~/ 25;
+    final double progressValue = totalIntervalSessions > 0
+        ? (completedSessions / totalIntervalSessions).clamp(0.0, 1.0)
+        : 0.0;
 
     return GestureDetector(
       onTap: onTap,
@@ -319,7 +472,7 @@ class _TimerPageState extends State<TimerPage> {
               ],
             ),
             // Goals progress bar
-            if (totalGoalHours > 0) ...[
+            if (totalIntervalSessions > 0) ...[
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -333,11 +486,13 @@ class _TimerPageState extends State<TimerPage> {
                     ),
                   ),
                   Text(
-                    '${goals.length} goal${goals.length > 1 ? 's' : ''}  •  ${_formatHours(totalGoalHours)}h total',
-                    style: const TextStyle(
+                    '$completedSessions / $totalIntervalSessions sessions',
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF2F7A3D),
+                      color: completedSessions >= totalIntervalSessions
+                          ? const Color(0xFF2F7A3D)
+                          : const Color(0xFF9A6A1A),
                     ),
                   ),
                 ],
@@ -346,7 +501,7 @@ class _TimerPageState extends State<TimerPage> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
                 child: LinearProgressIndicator(
-                  value: 0,
+                  value: progressValue,
                   minHeight: 6,
                   backgroundColor: const Color(0xFFE4EDE5),
                   valueColor: AlwaysStoppedAnimation<Color>(accentColor),
@@ -393,36 +548,75 @@ class _TimerPageState extends State<TimerPage> {
                   children: List.generate(goals.length, (index) {
                     final goal = goals[index];
                     final isSelectedGoal = selectedGoalId == goal.id;
+                    final goalDone = goalSessionCounts[goal.id] ?? 0;
+                    final goalTargetSessions = (goal.targetIntervals / 25)
+                        .ceil()
+                        .clamp(1, 99999);
+                    final goalProgress = (goalDone / goalTargetSessions).clamp(
+                      0.0,
+                      1.0,
+                    );
+                    final isComplete = goalDone >= goalTargetSessions;
                     return Padding(
                       padding: EdgeInsets.only(
-                        bottom: index == goals.length - 1 ? 0 : 8,
+                        bottom: index == goals.length - 1 ? 0 : 10,
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.pending_outlined,
-                            size: 16,
-                            color: accentColor,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              goal.name,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelectedGoal
-                                    ? FontWeight.w700
-                                    : FontWeight.w600,
-                                color: const Color(0xFF2E3C2E),
+                          Row(
+                            children: [
+                              Icon(
+                                isComplete
+                                    ? Icons.check_circle_outline
+                                    : Icons.pending_outlined,
+                                size: 16,
+                                color: isComplete
+                                    ? const Color(0xFF2F7A3D)
+                                    : accentColor,
                               ),
-                            ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  goal.name,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSelectedGoal
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    color: isComplete
+                                        ? const Color(0xFF2F7A3D)
+                                        : const Color(0xFF2E3C2E),
+                                    decoration: isComplete
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '$goalDone / $goalTargetSessions sessions',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: isComplete
+                                      ? const Color(0xFF2F7A3D)
+                                      : const Color(0xFF9A6A1A),
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${_formatHours(goal.targetHours)}h',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF9A6A1A),
+                          const SizedBox(height: 4),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: LinearProgressIndicator(
+                              value: goalProgress,
+                              minHeight: 4,
+                              backgroundColor: const Color(0xFFE4EDE5),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                isComplete
+                                    ? const Color(0xFF2F7A3D)
+                                    : accentColor,
+                              ),
                             ),
                           ),
                         ],
@@ -443,7 +637,4 @@ class _TimerPageState extends State<TimerPage> {
     final full = h.length == 6 ? 'ff$h' : h;
     return Color(int.parse(full, radix: 16));
   }
-
-  String _formatHours(double value) =>
-      value % 1 == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
 }

@@ -39,6 +39,6 @@ class GoalEntity {
     this.finishedAt,
   });
 
-  /// 1 interval = 1 Pomodoro session = 25 minutes
-  double get targetHours => targetIntervals * 25.0 / 60.0;
+  /// targetIntervals stores the goal duration in minutes
+  double get targetHours => targetIntervals / 60.0;
 }

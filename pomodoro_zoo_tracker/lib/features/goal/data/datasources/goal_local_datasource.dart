@@ -63,6 +63,11 @@ class GoalLocalDataSource {
 
   Future<void> deleteGoalsForCategory(String categoryId) async {
     final db = await _db;
+    // Unlink sessions referencing these goals to avoid FK constraint violation
+    await db.rawUpdate(
+      'UPDATE pomodoro_sessions SET goal_id = NULL WHERE goal_id IN (SELECT id FROM goals WHERE category_id = ?)',
+      [categoryId],
+    );
     await db.delete('goals', where: 'category_id = ?', whereArgs: [categoryId]);
   }
 }

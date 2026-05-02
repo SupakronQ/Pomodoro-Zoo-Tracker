@@ -22,7 +22,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'pomodoro_zoo.db');
     return await openDatabase(
       path,
-      version: 3,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -117,13 +117,15 @@ class DatabaseHelper {
         id TEXT PRIMARY KEY,
         user_id TEXT,
         category_id TEXT,
+        goal_id TEXT,
         duration_minutes INTEGER,
         coins_earned INTEGER DEFAULT 0,
         status TEXT,
         created_at TEXT,
         ended_at TEXT,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-        FOREIGN KEY (category_id) REFERENCES categories (id)
+        FOREIGN KEY (category_id) REFERENCES categories (id),
+        FOREIGN KEY (goal_id) REFERENCES goals (id)
       )
     ''');
 
@@ -387,6 +389,15 @@ class DatabaseHelper {
     } else if (oldVersion < 3) {
       await db.execute(
         'ALTER TABLE categories ADD COLUMN icon_code_point INTEGER DEFAULT 58920',
+      );
+    } else if (oldVersion < 4) {
+      await db.execute(
+        'ALTER TABLE pomodoro_sessions ADD COLUMN goal_id TEXT REFERENCES goals(id)',
+      );
+    } else if (oldVersion < 5) {
+      // targetIntervals now stores minutes instead of Pomodoro session count (1 session = 25 min)
+      await db.execute(
+        'UPDATE goals SET target_intervals = target_intervals * 25',
       );
     }
   }

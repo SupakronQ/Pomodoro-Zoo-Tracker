@@ -13,11 +13,7 @@ class MainPage extends StatefulWidget {
   final int initialIndex;
   final String? categoryTitleToEdit;
 
-  const MainPage({
-    super.key,
-    this.initialIndex = 0,
-    this.categoryTitleToEdit,
-  });
+  const MainPage({super.key, this.initialIndex = 0, this.categoryTitleToEdit});
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -55,11 +51,8 @@ class _MainPageState extends State<MainPage> {
         ),
       ),
       // 2. ใช้ IndexedStack เพื่อรักษา State ของแต่ละหน้า (เช่น Timer จะไม่หยุดเดิน)
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
-      
+      body: IndexedStack(index: _currentIndex, children: _pages),
+
       // 3. เรียกใช้ ZooBottomNav ที่คุณเขียนไว้
       bottomNavigationBar: ZooBottomNav(
         currentIndex: _currentIndex,

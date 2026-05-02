@@ -4,7 +4,6 @@ import 'dart:math';
 
 import '../providers/stats_provider.dart';
 import '../../domain/entities/stats_period.dart';
-import '../../domain/entities/stats_entry.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class StatsPage extends StatefulWidget {
@@ -91,7 +90,9 @@ class _StatsPageState extends State<StatsPage> {
         return Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AppColors.surfaceVariant.withOpacity(0.5), // Match faint background
+            color: AppColors.surfaceVariant.withOpacity(
+              0.5,
+            ), // Match faint background
             borderRadius: BorderRadius.circular(999),
           ),
           child: Row(
@@ -107,7 +108,11 @@ class _StatsPageState extends State<StatsPage> {
     );
   }
 
-  Widget _buildToggleOption(StatsProvider provider, StatsPeriod period, String label) {
+  Widget _buildToggleOption(
+    StatsProvider provider,
+    StatsPeriod period,
+    String label,
+  ) {
     final isSelected = provider.selectedPeriod == period;
     return GestureDetector(
       onTap: () => provider.setPeriod(period),
@@ -150,7 +155,7 @@ class _StatsPageState extends State<StatsPage> {
                 color: Colors.black.withOpacity(0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
           ),
           child: Column(
@@ -165,7 +170,11 @@ class _StatsPageState extends State<StatsPage> {
                       color: AppColors.surfaceVariant,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.timer, color: AppColors.secondary, size: 20),
+                    child: const Icon(
+                      Icons.timer,
+                      color: AppColors.secondary,
+                      size: 20,
+                    ),
                   ),
                   const Text(
                     'GROWTH METRIC',
@@ -207,7 +216,8 @@ class _StatsPageState extends State<StatsPage> {
     return Consumer<StatsProvider>(
       builder: (context, provider, child) {
         final score = provider.productivityScore['score'] as int? ?? 0;
-        final change = provider.productivityScore['percent_change'] as int? ?? 0;
+        final change =
+            provider.productivityScore['percent_change'] as int? ?? 0;
         final changeStr = change >= 0 ? '+$change%' : '$change%';
 
         return Container(
@@ -223,13 +233,17 @@ class _StatsPageState extends State<StatsPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Container(
+                  Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.trending_up, color: Colors.white, size: 20),
+                    child: const Icon(
+                      Icons.trending_up,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                   ),
                   Text(
                     'ANALYSIS',
@@ -334,7 +348,9 @@ class _StatsPageState extends State<StatsPage> {
                           child: Container(
                             width: 32,
                             decoration: BoxDecoration(
-                              color: AppColors.surfaceVariant.withOpacity(0.8), // Background faint bar
+                              color: AppColors.surfaceVariant.withOpacity(
+                                0.8,
+                              ), // Background faint bar
                               borderRadius: BorderRadius.circular(16),
                             ),
                             alignment: Alignment.bottomCenter,
@@ -346,11 +362,13 @@ class _StatsPageState extends State<StatsPage> {
                                   height: constraints.maxHeight * percentage,
                                   width: 32,
                                   decoration: BoxDecoration(
-                                    color: isMax ? AppColors.secondary : AppColors.primaryContainer,
+                                    color: isMax
+                                        ? AppColors.secondary
+                                        : AppColors.primaryContainer,
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                 );
-                              }
+                              },
                             ),
                           ),
                         ),
@@ -387,7 +405,10 @@ class _StatsPageState extends State<StatsPage> {
               borderRadius: BorderRadius.circular(24),
             ),
             child: const Center(
-              child: Text("No focus data yet.", style: TextStyle(color: Colors.grey)),
+              child: Text(
+                "No focus data yet.",
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
           );
         }
@@ -395,7 +416,7 @@ class _StatsPageState extends State<StatsPage> {
         // Setup chart segments
         List<DonutSegment> segments = [];
         String topCategoryName = provider.stats.first.categoryName;
-        
+
         for (var entry in provider.stats) {
           Color c;
           try {
@@ -405,7 +426,13 @@ class _StatsPageState extends State<StatsPage> {
           } catch (_) {
             c = AppColors.primaryContainer;
           }
-          segments.add(DonutSegment(color: c, percentage: entry.percentage, label: entry.categoryName));
+          segments.add(
+            DonutSegment(
+              color: c,
+              percentage: entry.percentage,
+              label: entry.categoryName,
+            ),
+          );
         }
 
         return Container(
@@ -429,38 +456,38 @@ class _StatsPageState extends State<StatsPage> {
               const SizedBox(height: 32),
               Center(
                 child: SizedBox(
-                   height: 180,
-                   width: 180,
-                   child: CustomPaint(
-                     painter: DonutChartPainter(segments: segments),
-                     child: Center(
-                       child: Column(
-                         mainAxisSize: MainAxisSize.min,
-                         children: [
-                           const Text(
-                             'Top Category',
-                             style: TextStyle(
-                               fontSize: 10,
-                               fontWeight: FontWeight.bold,
-                               color: Colors.grey,
-                             ),
-                           ),
-                           Text(
-                             topCategoryName,
-                             style: const TextStyle(
-                               fontSize: 18,
-                               fontWeight: FontWeight.bold,
-                               color: AppColors.secondary,
-                             ),
-                           ),
-                         ],
-                       ),
-                     ),
-                   ),
+                  height: 180,
+                  width: 180,
+                  child: CustomPaint(
+                    painter: DonutChartPainter(segments: segments),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Top Category',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          Text(
+                            topCategoryName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Legend
               ...segments.map((seg) {
                 return Padding(
@@ -510,7 +537,11 @@ class DonutSegment {
   final double percentage;
   final String label;
 
-  DonutSegment({required this.color, required this.percentage, required this.label});
+  DonutSegment({
+    required this.color,
+    required this.percentage,
+    required this.label,
+  });
 }
 
 class DonutChartPainter extends CustomPainter {
@@ -524,24 +555,26 @@ class DonutChartPainter extends CustomPainter {
 
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width / 2, size.height / 2);
-    final strokeWidth = 24.0; 
+    final strokeWidth = 24.0;
 
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round; 
+      ..strokeCap = StrokeCap.round;
 
     double startAngle = -pi / 2; // Start at top
-    
+
     // Gap between segments (in radians)
-    final double gap = 0.05; 
+    final double gap = 0.05;
 
     for (var seg in segments) {
       final sweepAngle = (seg.percentage * 2 * pi);
       paint.color = seg.color;
-      
+
       // If there's only 1 segment, don't leave a gap
-      final actualSweep = segments.length > 1 ? max(0.0, sweepAngle - gap) : sweepAngle;
+      final actualSweep = segments.length > 1
+          ? max(0.0, sweepAngle - gap)
+          : sweepAngle;
 
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius - (strokeWidth / 2)),
@@ -550,7 +583,7 @@ class DonutChartPainter extends CustomPainter {
         false,
         paint,
       );
-      
+
       startAngle += sweepAngle;
     }
   }
