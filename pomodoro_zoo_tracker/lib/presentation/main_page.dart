@@ -8,6 +8,7 @@ import '../../features/timer/presentation/pages/timer_page.dart';
 import '../../features/category/presentation/pages/category_management_page.dart';
 import '../../features/stats/presentation/pages/stats_page.dart';
 import '../../features/coin/presentation/providers/coin_provider.dart';
+import '../../features/ads/presentation/providers/ad_provider.dart';
 
 class MainPage extends StatefulWidget {
   final int initialIndex;
@@ -49,7 +50,14 @@ class _MainPageState extends State<MainPage> {
             return ZooHeader(
               title: "Zoo Tracker",
               coins: coinProvider.balance,
-              onCoinTap: () => print("Coin clicked!"),
+              onCoinTap: () async {
+                final adProvider = Provider.of<AdProvider>(context, listen: false);
+                await adProvider.showAd(
+                  onEarnedReward: (amount) {
+                    coinProvider.addCoins(amount, 'watched_ad');
+                  },
+                );
+              },
             );
           },
         ),

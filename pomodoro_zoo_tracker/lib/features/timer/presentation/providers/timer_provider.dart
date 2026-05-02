@@ -153,6 +153,10 @@ class TimerProvider extends ChangeNotifier {
           ? PomodoroPhase.longBreak
           : PomodoroPhase.shortBreak;
     } else {
+      // Finished a break
+      if (_completedFocusRounds > 0 && _completedFocusRounds % 2 == 0) {
+        onSessionComplete?.call(100);
+      }
       _phase = PomodoroPhase.focus;
     }
 

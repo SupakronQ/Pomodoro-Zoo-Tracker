@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pomodoro_zoo_tracker/presentation/main_page.dart';
 import 'package:provider/provider.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'core/database/database_helper.dart';
 import 'core/theme/app_theme.dart';
@@ -34,8 +35,15 @@ import 'features/stats/data/datasources/stats_local_datasource.dart';
 import 'features/stats/data/repositories/stats_repository_impl.dart';
 import 'features/stats/presentation/providers/stats_provider.dart';
 
+// Ads feature
+import 'features/ads/data/repositories/ad_repository_impl.dart';
+import 'features/ads/presentation/providers/ad_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize MobileAds
+  MobileAds.instance.initialize();
 
   // Initialize Database
   final dbHelper = DatabaseHelper();
@@ -77,6 +85,9 @@ class MyApp extends StatelessWidget {
     final statsDataSource = StatsLocalDataSource(dbHelper);
     final statsRepository = StatsRepositoryImpl(statsDataSource);
 
+    // Ads
+    final adRepository = AdRepositoryImpl();
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
@@ -96,6 +107,9 @@ class MyApp extends StatelessWidget {
           create: (_) =>
               StatsProvider(repository: statsRepository)
                 ..loadStats(userId: guestUserId),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AdProvider(adRepository: adRepository)..loadAd(),
         ),
         ChangeNotifierProxyProvider2<
           CoinProvider,
@@ -128,3 +142,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
